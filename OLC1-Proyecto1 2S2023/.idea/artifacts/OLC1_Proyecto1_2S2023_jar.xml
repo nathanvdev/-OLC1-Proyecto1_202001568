@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="OLC1-Proyecto1 2S2023:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/OLC1_Proyecto1_2S2023_jar</output-path>
+    <root id="archive" name="OLC1-Proyecto1 2S2023.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="OLC1-Proyecto1 2S2023" />
+    </root>
+  </artifact>
+</component>

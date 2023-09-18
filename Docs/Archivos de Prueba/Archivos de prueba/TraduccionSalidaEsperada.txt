@@ -1,0 +1,22 @@
+def main():
+    Operacion=9+9-7.8
+    numero1=-3
+    letra='a'
+    frase="Compiladores 1"
+    flag=(numero1 == Operacion) or (True and letra != frase)
+    print(frase," si sale")
+    b=0
+    while b < 10:
+        print("Despegando ",b)
+        b=b+1
+    for i in range(0,10):
+        for j in range(0,10):
+            print("el valor de la matriz es: ",i," ",j)
+    r=1
+    While True:
+        print("el valor de r es: ",r)
+        if r <= 5:
+            break
+
+if__name__ = “__main__”:
+   main()

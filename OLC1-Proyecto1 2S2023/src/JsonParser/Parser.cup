@@ -1,0 +1,56 @@
+// ------------  Paquete e importaciones ------------
+package JsonParser;
+
+import java_cup.runtime.*;
+import java.util.HashMap;
+
+
+//------> Codigo para el parser
+//------> Declaracion de variables, funciones y funciones de error
+
+parser code
+{:
+    public static HashMap<String, String> JsonData = new HashMap<>();
+
+    public void syntax_error(Symbol s)
+    {
+            System.err.println("Error Sintactico: "+ s.value + " - Fila: " + s.right + " - Columna: " + s.left + ". Recuperado" );
+    }
+
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception
+    {
+            System.err.println("Error Sintactico: "+ s.value + " - Fila: " + s.right + " - Columna: " + s.left + ". Sin recuperacion." );
+    }
+
+:}
+
+
+//------> Codigo para las acciones gramaticales (no tocar)
+action code
+{:  :}
+
+
+//------> Declaración de terminales
+terminal String CADENA, BRACKET_O, BRACKET_C, COLON, COMMA, DOUBLE;
+
+
+//------> Declaración de no terminales
+non terminal inicio, obj, lista_OBJ;
+
+
+//------> Definir Simbolo Inicial
+start with inicio;
+
+
+// ------------>  Producciones  <------------
+
+inicio ::= BRACKET_O lista_OBJ BRACKET_C
+;
+
+lista_OBJ ::= lista_OBJ COMMA obj
+    | obj
+;
+
+obj ::= CADENA:a COLON CADENA:b             {:  JsonData.put(a, b);  :}
+        | CADENA:a COLON DOUBLE:b           {:  JsonData.put(a, b);  :}
+;

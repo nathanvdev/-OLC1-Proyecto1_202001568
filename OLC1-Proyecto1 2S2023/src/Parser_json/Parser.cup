@@ -1,5 +1,5 @@
 // ------------  Paquete e importaciones ------------
-package JsonParser;
+package Parser_json;
 
 import java_cup.runtime.*;
 import java.util.HashMap;
@@ -51,6 +51,6 @@ lista_OBJ ::= lista_OBJ COMMA obj
     | obj
 ;
 
-obj ::= CADENA:a COLON CADENA:b             {:  JsonData.put(a, b);  :}
-        | CADENA:a COLON DOUBLE:b           {:  JsonData.put(a, b);  :}
+obj ::= CADENA:a COLON CADENA:b             {:  JsonData.put(a.replace("\"", ""), b.replace("\"", ""));  :}
+        | CADENA:a COLON DOUBLE:b           {:  JsonData.put(a.replace("\"", ""), b.replace("\"", ""));  :}
 ;

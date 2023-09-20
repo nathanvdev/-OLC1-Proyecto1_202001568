@@ -1,5 +1,5 @@
 // ------------  Paquete e importaciones ------------
-package JsonParser;
+package Parser_json;
 
 import java_cup.runtime.*;
 

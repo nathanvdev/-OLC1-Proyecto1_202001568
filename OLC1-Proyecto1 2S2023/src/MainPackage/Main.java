@@ -1,48 +1,57 @@
 package MainPackage;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
+
+import GUI.MainPanel;
+import javax.swing.*;
+import Objects.*;
+
+
 
 
 public class Main {
+    public static HashMap<String, String> globalVariables = new HashMap<>();
+    public static ArrayList<SymbolData> toFind = new ArrayList<>();
+    public static ArrayList<SymbolData> JsonData = new ArrayList<>();
+
+    public static ArrayList<String>  tmplist_values = new ArrayList<>();
+    public static ArrayList<String> tmplist_ejex = new ArrayList<>();
+
+    public static BarChart BarChart1 = new BarChart();
     public static void main(String[] args) {
-        //analizadores("src/statpy/", "Lexer.jflex", "Parser.cup");
-        //analizadores("src/JsonParser/", "Lexer.jflex", "Parser.cup");
+        //analizadores("src/Parser_statpy/", "Lexer.jflex", "Parser.cup");
+        //analizadores("src/Parser_json/", "Lexer.jflex", "Parser.cup");
 
-        String entrada = """
-                       Console.Write("hola")
-                        """;
 
-        String Jsontxt = """
-                // Comentario Simple
-                /* Comentario
-                Multilinea*/
-                                
-                {
-                	"titulo":"Reporte 1",
-                	"ejex1":"Reprobado",
-                	"ejex2":"Aprobado",
-                	"val1": 60.0,
-                	"val2": 61.0
-                }
-                """;
 
-        //analizar(entrada);
+
+        try {
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+        } catch(Exception ignored){}
+        MainPanel hello = new MainPanel();
+        hello.setContentPane(hello.FirstPanel);
+        hello.setSize(800, 900);
+        hello.setTitle("Compi1");
+        hello.setVisible(true);
+        hello.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+
+
+        //Statpy_Analizer(entrada);
         //System.out.println(Parser.Statpy_Result);
 
-        Json_Analizer(Jsontxt);
-        for (String clave : JsonParser.Parser.JsonData.keySet()) {
-            Object valor = JsonParser.Parser.JsonData.get(clave);
-            System.out.println(clave +" : "+ valor);
-        }
 
     }
 
     public static void analizadores(String ruta, String jflexFile, String cupFile){
         try {
-            String opcionesJflex[] =  {ruta+jflexFile,"-d",ruta};
+            String[] opcionesJflex =  {ruta+jflexFile,"-d",ruta};
             jflex.Main.generate(opcionesJflex);
 
-            String opcionesCup[] =  {"-destdir", ruta,"-parser","Parser",ruta+cupFile};
+            String[] opcionesCup =  {"-destdir", ruta,"-parser","Parser",ruta+cupFile};
             java_cup.Main.main(opcionesCup);
 
         } catch (Exception e) {
@@ -52,25 +61,88 @@ public class Main {
     }
 
     // Realizar Analisis
-    public static void analizar (String entrada){
+    public static void Statpy_Analizer (String entrada){
             try {
-                statpy.Lexer lexer = new statpy.Lexer(new StringReader(entrada));
-                statpy.Parser parser = new statpy.Parser(lexer);
+                tmplist_ejex.clear();
+                tmplist_values.clear();
+                Parser_statpy.Lexer lexer = new Parser_statpy.Lexer(new StringReader(entrada));
+                Parser_statpy.Parser parser = new Parser_statpy.Parser(lexer);
                 parser.parse();
+                System.out.println();
+
             } catch (Exception e) {
                 System.out.println("Error fatal en compilación de entrada.");
                 System.out.println(e);
             }
         }
 
-    public static void Json_Analizer (String entrada){
+    public static void Json_Analizer (String entrada, String NameFIle){
         try {
-            JsonParser.Lexer lexer = new JsonParser.Lexer(new StringReader(entrada));
-            JsonParser.Parser parser = new JsonParser.Parser(lexer);
+            Parser_json.Lexer lexer = new Parser_json.Lexer(new StringReader(entrada));
+            Parser_json.Parser parser = new Parser_json.Parser(lexer);
             parser.parse();
+
+            for (String clave : Parser_json.Parser.JsonData.keySet()) {
+                String valor = Parser_json.Parser.JsonData.get(clave);
+                JsonData.add(new SymbolData(NameFIle, clave, valor));
+            }
+
+
+
         } catch (Exception e) {
             System.out.println("Error fatal en compilación de entrada.");
             System.out.println(e);
         }
     }
+
+    private static void ShowData(ArrayList<SymbolData> jsonData) {
+        for (SymbolData symbolData : jsonData) {
+            String fileName = symbolData.getFileName();
+            String symbolName = symbolData.getSymbolName();
+            Object value = symbolData.getValue();
+            System.out.println("FileName: " + fileName + ", SymbolName: " + symbolName + ", Value: " + value);
+        }
+        System.out.println("------------------------------------------------------------------------------------------------------");
+    }
+
+    public static String FindVariable(String VarName){
+
+        for (String key : globalVariables.keySet()) {
+            String value = globalVariables.get(key);
+
+            if (VarName.equals(key)){
+                return value;
+            }
+
+        }
+        System.out.println("no se encontro la variable");
+
+
+
+        return "null";
+    }
+
+    public static String FinInJson(String FileName, String VarName){
+
+        for (SymbolData symbolData : JsonData) {
+            String fileName = symbolData.getFileName();
+            String symbolName = symbolData.getSymbolName();
+            String value = symbolData.getValue();
+
+            if (fileName.equals(FileName) && symbolName.equals(VarName)){
+                return value;
+            }
+        }
+        System.out.println("No se encontro la Variable");
+        return "null";
+    }
+
+    public static void createBarChart(){
+        ChartGenerator.barras(BarChart1.getTittle(), BarChart1.getTittleX(), BarChart1.getTittleY(), tmplist_values, tmplist_ejex);
+    }
+
+    public static void createPieChart(){
+        ChartGenerator.Pie(BarChart1.getTittle(), tmplist_values, tmplist_ejex);
+    }
 }
+

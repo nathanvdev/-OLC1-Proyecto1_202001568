@@ -91,8 +91,6 @@ public class Main {
                 JsonData.add(new SymbolData(NameFIle, clave, valor));
             }
 
-
-
         } catch (Exception e) {
             System.out.println("Error fatal en compilación de entrada.");
             System.out.println(e);

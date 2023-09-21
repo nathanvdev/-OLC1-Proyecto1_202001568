@@ -12,7 +12,7 @@ import Objects.SymbolData;
 
 parser code
 {:
-    public static String Statpy_Result = "";
+    public static String Statpy_Result = "def main():\n";
 
     public void syntax_error(Symbol s)
     {
@@ -35,23 +35,26 @@ action code
 //------> Declaración de terminales
 
 terminal String RVOID, RMAIN, RGLOBALES, RSTRING, RDOUBLE, RNEWVAL, RCONSOLE, RWRITE,RBARRAS,RTITULO, RPIE;
-terminal String REJEX, RVALORES, RTITULOX, RTITULOY;
-terminal String PARENTESIS_O, PARENTESIS_C, DOT, COMMA, DOLLAR, CURLY_O, CURLY_C, EQUALS, SEMICOLON;
-terminal String BRACKET_O, BRACKET_C;
-terminal String CADENA, RVARIABLE, DECIMAL;
+terminal String REJEX, RVALORES, RTITULOX, RTITULOY, TRUE, FALSE, RAND, ROR, RINT, RCHAR, RBOOL, RIF, RELSE, RELIF;
+terminal String RSWITCH, RDEFAULT, RCASE, BREAK, RFOR, RDOWHILE, RWHILE;
+terminal String PARENTESIS_O, PARENTESIS_C, DOT, COMMA, DOLLAR, CURLY_O, CURLY_C, EQUALS, SEMICOLON, NOT;
+terminal String PLUS, LESS, BY, DIVIDED, MINOR, GREATER, MINOREQUAL, GREATEREQUAL, EQUALEQUAL, DIFERENT;
+terminal String BRACKET_O, BRACKET_C, COLON;
+terminal String CADENA, VARIABLE, DECIMAL, ENTERO;
 
 //------> Declaración de no terminales
 
 non terminal inicio;
-non terminal instruccion, mostrar, definirglobales, graficabarras, graficapie;
-non terminal lista_instr, var_list, barras_list, array_ejex, array_val, pie_list;
-non terminal expresion, var, barras, _ejex, _val, _string, pie;
+non terminal instruccion, print, definirglobales, graficabarras, graficapie, assignedvalues, if, switch_, for, while;
+non terminal lista_instr, var_list, barras_list, array_ejex, array_val, pie_list, elif_list, cases, dowhile;
+non terminal expresion, var, barras, _ejex, _val, _string, pie, type, _elif, case;
 
 //------> PRECEDENCIA
-
-/*precedence left MAS;
-precedence left POR;*/
-
+precedence right DIFERENT;
+precedence left RAND, ROR;
+precedence left MINOR, GREATER, MINOREQUAL, GREATEREQUAL, EQUALEQUAL, DIFERENT;
+precedence left PLUS, LESS;
+precedence left BY,DIVIDED;
 
 //------> Definir Simbolo Inicial
 start with inicio;
@@ -59,18 +62,116 @@ start with inicio;
 
 // ------------>  Producciones  <------------
 
-inicio ::= RVOID RMAIN PARENTESIS_O PARENTESIS_C CURLY_O lista_instr CURLY_C
+inicio ::= RVOID RMAIN PARENTESIS_O PARENTESIS_C CURLY_O lista_instr:a CURLY_C            {: Statpy_Result += a;  Statpy_Result += "\n\nif__name__ = \"__main__\";\n\tmain()"; :}
 ;
 
-lista_instr ::= lista_instr instruccion
-    | instruccion
+lista_instr ::= lista_instr:list instruccion:a                                         {:   if (a != null) list +="\t"+a+"\n"; RESULT = list;     :}
+    | instruccion:a                                                                     {:     RESULT = "\t"+a+"\n";     :}
 ;
 
-instruccion ::= mostrar
-               |definirglobales
+instruccion ::= definirglobales
                |graficabarras
                |graficapie
+               |print:a                                                           {:  RESULT = a.toString();      :}
+               |assignedvalues:a                                                  {:  RESULT = a.toString();      :}
+               |if:a                                                              {:  RESULT = a.toString();      :}
+               |switch_:a                                                         {:  RESULT = a.toString();      :}
+               |for:a                                                             {:  RESULT = a.toString();      :}
+               |while:a                                                           {:  RESULT = a.toString();      :}
+               |dowhile:a                                                         {:  RESULT = a.toString();      :}
+               |BREAK SEMICOLON
 ;
+
+
+
+//-------------------------------------Traduccion Statpy -> python ---------------------------------------------------------------
+
+print ::= RCONSOLE DOT RWRITE PARENTESIS_O expresion:a PARENTESIS_C SEMICOLON  {: RESULT = "Print("+a.toString()+")"; :}
+;
+
+assignedvalues ::=  type VARIABLE:a SEMICOLON                                    {: RESULT = a.toString() + " = null"; :}
+                |   type VARIABLE:a EQUALS expresion:b SEMICOLON                 {: RESULT = a.toString() + " = "+b.toString(); :}
+                |   VARIABLE:a EQUALS expresion:b SEMICOLON                      {: RESULT = a.toString() + " = "+b.toString(); :}
+;
+
+switch_ ::= RSWITCH PARENTESIS_O VARIABLE:a PARENTESIS_C CURLY_O cases:list RDEFAULT COLON lista_instr:b CURLY_C
+        {: RESULT = "def switch(case, "+a+"0:\n\tswitcher = {\n"+"IDENT[START]\n"+list+"default: "+b+"\nIDENT[FINISH]\n}"; :}
+;
+
+cases ::= cases:list case:a                         {:   if (a != null) list += ""+a; RESULT = list;     :}
+        | case:a                                    {:     RESULT = a;     :}
+;
+
+case ::= RCASE ENTERO:a COLON lista_instr:b               {: RESULT = a + ": " + b; :}
+;
+
+
+if ::=  RIF PARENTESIS_O expresion:a PARENTESIS_C CURLY_O lista_instr:b CURLY_C
+        {: RESULT = "if "+a+":\n"+"IDENT[START]\n"+b.toString()+"IDENT[FINISH]\n"; :}
+
+    |   RIF PARENTESIS_O expresion:a PARENTESIS_C CURLY_O lista_instr:b CURLY_C RELSE CURLY_O lista_instr:c CURLY_C
+        {: RESULT = "if "+a+":\n"+"IDENT[START]\n"+b.toString()+"IDENT[FINISH]\n"+"else {\n"+"IDENT[START]\n"+c.toString()+"IDENT[FINISH]\n"; :}
+
+    |   RIF PARENTESIS_O expresion:a PARENTESIS_C CURLY_O lista_instr:b CURLY_C elif_list:c
+        {: RESULT = "if "+a+":\n"+"IDENT[START]\n"+b.toString()+"IDENT[FINISH]\n"+c; :}
+
+    |   RIF PARENTESIS_O expresion:a PARENTESIS_C CURLY_O lista_instr:b CURLY_C elif_list:c RELSE CURLY_O lista_instr:d CURLY_C
+        {: RESULT = "if "+a+":\n"+"IDENT[START]\n"+b.toString()+"IDENT[FINISH]\n"+c+"else {\n"+"IDENT[START]\n"+d.toString()+"IDENT[FINISH]\n"; :}
+;
+
+elif_list ::= elif_list:list _elif:a           {:   if (a != null) list += ""+a; RESULT = list;     :}
+            |   _elif:a                          {:     RESULT = a;     :}
+;
+
+_elif ::= RELIF PARENTESIS_O expresion:a PARENTESIS_C CURLY_O lista_instr:b CURLY_C
+        {: RESULT = "elif "+a+":\n"+"IDENT[START]\n"+b.toString()+"IDENT[FINISH]\n"; :}
+;
+
+for ::= RFOR PARENTESIS_O RINT VARIABLE:a EQUALS ENTERO:b SEMICOLON VARIABLE:c MINOR ENTERO SEMICOLON VARIABLE PLUS PLUS PARENTESIS_C CURLY_O lista_instr:d CURLY_C
+        {: RESULT = "for "+a+" in range "+b+","+c+"):\n"+"IDENT[START]\n"+d+"IDENT[FINISH]\n"; :}
+
+     |  RFOR PARENTESIS_O RINT VARIABLE:a EQUALS ENTERO:b SEMICOLON VARIABLE:c MINOREQUAL ENTERO SEMICOLON VARIABLE PLUS PLUS PARENTESIS_C CURLY_O lista_instr:d CURLY_C
+        {: RESULT = "for "+a+" in range "+b+","+c+"):\n"+"IDENT[START]\n"+d+"IDENT[FINISH]\n"; :}
+;
+
+while::= RWHILE PARENTESIS_O expresion:a PARENTESIS_C CURLY_O lista_instr:b CURLY_C
+        {:  RESULT = "while " +a+":\n"+"IDENT[START]\n"+b+"IDENT[FINISH]\n";     :}
+;
+
+dowhile::= assignedvalues:a RDOWHILE CURLY_O lista_instr:b CURLY_C RWHILE PARENTESIS_O expresion:c PARENTESIS_C SEMICOLON
+        {:  RESULT = a+"\n while True:\n"+"IDENT[START]\n"+b+"if ("+c+"):\n"+"IDENT[START]\n"+"break\n"+"IDENT[FINISH]\n"+"IDENT[FINISH]\n";      :}
+;
+
+type ::=    RSTRING
+        |   RINT
+        |   RDOUBLE
+        |   RBOOL
+        |   RCHAR
+;
+
+expresion ::=   CADENA:a                                {:  RESULT = a; :}
+            |   DECIMAL:a                               {:  RESULT = a; :}
+            |   ENTERO:a                                {:  RESULT = a; :}
+            |   VARIABLE:a                              {:  RESULT = a; :}
+            |   TRUE:a                                  {:  RESULT = a; :}
+            |   FALSE:a                                 {:  RESULT = a; :}
+            |   NOT expresion:a                         {:  RESULT = "not "+ a.toString(); :}
+            |   expresion:a PLUS expresion:b            {:  RESULT = a.toString()+" + "+b.toString(); :}
+            |   expresion:a LESS expresion:b            {:  RESULT = a.toString()+" - "+b.toString(); :}
+            |   expresion:a BY expresion:b              {:  RESULT = a.toString()+" * "+b.toString(); :}
+            |   expresion:a DIVIDED expresion:b         {:  RESULT = a.toString()+" / "+b.toString(); :}
+            |   expresion:a MINOR expresion:b           {:  RESULT = a.toString()+" < "+b.toString(); :}
+            |   expresion:a GREATER expresion:b         {:  RESULT = a.toString()+" > "+b.toString(); :}
+            |   expresion:a MINOREQUAL expresion:b      {:  RESULT = a.toString()+" <= "+b.toString(); :}
+            |   expresion:a GREATEREQUAL expresion:b    {:  RESULT = a.toString()+" >= "+b.toString(); :}
+            |   expresion:a EQUALEQUAL expresion:b      {:  RESULT = a.toString()+" == "+b.toString(); :}
+            |   expresion:a DIFERENT expresion:b        {:  RESULT = a.toString()+" != "+b.toString(); :}
+            |   expresion:a RAND expresion:b            {:  RESULT = a.toString()+" and "+b.toString(); :}
+            |   expresion:a ROR expresion:b             {:  RESULT = a.toString()+" or "+b.toString(); :}
+;
+
+
+//----------------------------Funciones Estadisticas---------------------------------
 
 definirglobales ::= RVOID RGLOBALES PARENTESIS_O PARENTESIS_C CURLY_O var_list CURLY_C
 ;
@@ -79,13 +180,13 @@ var_list ::= var_list var
           |  var
 ;
 
-var ::= RSTRING RVARIABLE:a EQUALS CADENA:b SEMICOLON                                                             {:  MainPackage.Main.globalVariables.put(a,b.replace("\"", ""));   :}
-     |  RDOUBLE RVARIABLE:a EQUALS DECIMAL:b SEMICOLON                                                            {:  MainPackage.Main.globalVariables.put(a,b.replace("\"", ""));   :}
-     |  RSTRING RVARIABLE:b EQUALS DOLLAR CURLY_O RNEWVAL COMMA CADENA:a COMMA CADENA:c CURLY_C SEMICOLON
+var ::= RSTRING VARIABLE:a EQUALS CADENA:b SEMICOLON                                                             {:  MainPackage.Main.globalVariables.put(a,b.replace("\"", ""));   :}
+     |  RDOUBLE VARIABLE:a EQUALS DECIMAL:b SEMICOLON                                                            {:  MainPackage.Main.globalVariables.put(a,b.replace("\"", ""));   :}
+     |  RSTRING VARIABLE:b EQUALS DOLLAR CURLY_O RNEWVAL COMMA CADENA:a COMMA CADENA:c CURLY_C SEMICOLON
      {:     String tmp = MainPackage.Main.FinInJson(a.replace("\"", ""),c.replace("\"", ""));
             MainPackage.Main.globalVariables.put(b.replace("\"",""), tmp);  :}
 
-     |  RDOUBLE RVARIABLE:b EQUALS DOLLAR CURLY_O RNEWVAL COMMA CADENA:a COMMA CADENA:c CURLY_C SEMICOLON
+     |  RDOUBLE VARIABLE:b EQUALS DOLLAR CURLY_O RNEWVAL COMMA CADENA:a COMMA CADENA:c CURLY_C SEMICOLON
       {:    String tmp = MainPackage.Main.FinInJson(a.replace("\"", ""), c.replace("\"", ""));
              MainPackage.Main.globalVariables.put(b.replace("\"",""), tmp); :}
 ;
@@ -118,7 +219,7 @@ barras ::=  RSTRING RTITULO EQUALS _string:a SEMICOLON                          
 ;
 
 _string ::=   CADENA:a                                                              {: RESULT = a.replace("\"", ""); :}
-        |   RVARIABLE:a                                                             {: RESULT = MainPackage.Main.FindVariable(a.replace("\"", ""));    :}
+        |   VARIABLE:a                                                             {: RESULT = MainPackage.Main.FindVariable(a.replace("\"", ""));    :}
         |   DOLLAR CURLY_O RNEWVAL COMMA CADENA:a COMMA CADENA:c CURLY_C            {: RESULT = MainPackage.Main.FinInJson(a.replace("\"", ""),c.replace("\"", ""));    :}
 ;
 
@@ -127,29 +228,23 @@ array_ejex ::=   array_ejex COMMA _ejex
 ;
 
 _ejex ::=   CADENA:a                                                                {: MainPackage.Main.tmplist_ejex.add(a.toString()); :}
-        |   RVARIABLE:a
-        {:    String tmp = MainPackage.Main.FindVariable(a.replace("\"", ""));
-              MainPackage.Main.tmplist_ejex.add(tmp); :}
+        |   VARIABLE:a
+                                                                                    {:    String tmp = MainPackage.Main.FindVariable(a.replace("\"", ""));
+                                                                                          MainPackage.Main.tmplist_ejex.add(tmp); :}
         |   DOLLAR CURLY_O RNEWVAL COMMA CADENA:a COMMA CADENA:c CURLY_C
-        {:     String tmp = MainPackage.Main.FinInJson(a.replace("\"", ""),c.replace("\"", ""));
-               MainPackage.Main.tmplist_ejex.add(tmp);  :}
+                                                                                    {:     String tmp = MainPackage.Main.FinInJson(a.replace("\"", ""),c.replace("\"", ""));
+                                                                                           MainPackage.Main.tmplist_ejex.add(tmp);  :}
 ;
 
 array_val ::=   array_val COMMA _val
             |   _val:a
 ;
 
-_val ::=    DECIMAL:a                                                                {: MainPackage.Main.tmplist_values.add(a.toString()); :}
-        |   RVARIABLE:a
-        {:    String tmp = MainPackage.Main.FindVariable(a.replace("\"", ""));
-              MainPackage.Main.tmplist_values.add(tmp); :}
+_val ::=    DECIMAL:a                                                                   {: MainPackage.Main.tmplist_values.add(a.toString()); :}
+        |   VARIABLE:a
+                                                                                    {:    String tmp = MainPackage.Main.FindVariable(a.replace("\"", ""));
+                                                                                          MainPackage.Main.tmplist_values.add(tmp); :}
         |   DOLLAR CURLY_O RNEWVAL COMMA CADENA:a COMMA CADENA:c CURLY_C
-        {:     String tmp = MainPackage.Main.FinInJson(a.replace("\"", ""),c.replace("\"", ""));
-               MainPackage.Main.tmplist_values.add(tmp);  :}
-;
-
-mostrar ::= RCONSOLE DOT RWRITE PARENTESIS_O expresion:a PARENTESIS_C   {: Statpy_Result += "Print("+a.toString()+")"; :}
-;
-
-expresion ::= CADENA:a        {:  RESULT = a; :}
+                                                                                    {:     String tmp = MainPackage.Main.FinInJson(a.replace("\"", ""),c.replace("\"", ""));
+                                                                                           MainPackage.Main.tmplist_values.add(tmp);  :}
 ;

@@ -19,7 +19,10 @@
         <children>
           <component id="902c9" class="javax.swing.JTextArea" binding="textArea2" default-binding="true">
             <constraints/>
-            <properties/>
+            <properties>
+              <font name="Monospaced" style="0"/>
+              <maximumSize width="1" height="17"/>
+            </properties>
           </component>
         </children>
       </scrollpane>
@@ -36,6 +39,8 @@
               <editable value="false"/>
               <enabled value="true"/>
               <focusable value="false"/>
+              <font name="Monospaced" style="0"/>
+              <maximumSize width="1" height="17"/>
               <requestFocusEnabled value="false"/>
               <verifyInputWhenFocusTarget value="false"/>
             </properties>

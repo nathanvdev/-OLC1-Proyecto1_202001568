@@ -3,13 +3,13 @@ package MainPackage;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Objects;
 
 import GUI.MainPanel;
 import javax.swing.*;
 import Objects.*;
-
-
+import Parser_statpy.Parser;
 
 
 public class Main {
@@ -28,6 +28,7 @@ public class Main {
 
 
 
+
         try {
             UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
         } catch(Exception ignored){}
@@ -37,6 +38,7 @@ public class Main {
         hello.setTitle("Compi1");
         hello.setVisible(true);
         hello.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
 
 
 
@@ -65,10 +67,12 @@ public class Main {
             try {
                 tmplist_ejex.clear();
                 tmplist_values.clear();
+                Parser.Statpy_Result = "";
                 Parser_statpy.Lexer lexer = new Parser_statpy.Lexer(new StringReader(entrada));
                 Parser_statpy.Parser parser = new Parser_statpy.Parser(lexer);
                 parser.parse();
-                System.out.println();
+
+                Parser.Statpy_Result = Tabulaciones();
 
             } catch (Exception e) {
                 System.out.println("Error fatal en compilación de entrada.");
@@ -144,5 +148,28 @@ public class Main {
     public static void createPieChart(){
         ChartGenerator.Pie(BarChart1.getTittle(), tmplist_values, tmplist_ejex);
     }
+
+    public static String Tabulaciones() {
+        String[] lines = Parser.Statpy_Result.split("\n");
+        StringBuilder newResult = new StringBuilder();
+        newResult.append("def main():\n");
+        int tabs = 0;
+
+        for (String line : lines) {
+            if (line.equals("IDENT[START]")) {
+                tabs++;
+            } else if (line.equals("IDENT[FINISH]")) {
+                tabs--;
+            } else {
+                for (int i = 0; i < tabs; i++) {
+                    newResult.append("\t"); // Agregar una tabulación antes del texto
+                }
+                newResult.append(line).append("\n"); // Agregar la línea original sin salto de línea adicional
+            }
+        }
+
+        return newResult.toString();
+    }
+
 }
 

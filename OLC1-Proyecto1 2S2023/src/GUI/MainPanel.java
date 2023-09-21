@@ -4,6 +4,7 @@ package GUI;
 
 
 import Objects.SymbolData;
+import Parser_statpy.Parser;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -74,8 +75,6 @@ public class MainPanel extends JFrame {
                     Parser_json.Parser.JsonData.clear();
                     Json_Analizer(textArea2.getText(), FileName);
 
-
-
                     String tmptxt = "Se guardaron Las Variables\n\n";
                     for(SymbolData Data : MainPackage.Main.JsonData){
                         tmptxt += "from: "+Data.getFileName()+" --> "+Data.getSymbolName() +": "+Data.getValue() +"\n";
@@ -84,6 +83,9 @@ public class MainPanel extends JFrame {
 
                 } else if ("Statpy".equals(comboBox1.getSelectedItem())) {
                     Statpy_Analizer(textArea2.getText());
+
+                    textArea1.setText(Parser.Statpy_Result);
+
                 }
             }
         });
